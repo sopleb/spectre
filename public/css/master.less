@@ -10,6 +10,8 @@
 @toolbox-height: 42px;
 @toolbox-background: darken(@paste-background, 3%);
 
+@warning-background: rgb(red(@toolbox-background), green(@toolbox-background), 0);
+
 @paste-title-font-size: 16pt;
 @paste-title-color: contrast(@toolbox-background, black, white);
 @paste-subtitle-font-size: 10pt;
@@ -29,12 +31,28 @@
 @success-highlight: rgb(0, green(@major-highlight), 0);
 @success-highlight-border: rgb(0, green(@major-highlight-border), 0);
 
+@warning-highlight: rgb(red(@major-highlight), green(@major-highlight), 0);
+@warning-highlight-border: rgb(red(@major-highlight-border), green(@major-highlight-border), 0);
+
 @line-number-bar: @minor-highlight;
 @line-numbers: lighten(@paste-background, 25%);
 @line-numbers-hover: lighten(@line-numbers, 20%);
 
 @media-tablet: ~"screen and (min-width: 768px)";
 @media-phone: ~"screen and (max-width: 767px)";
+
+@paste-title-font-features: 'calt' 1, 'case' 1, 'ss01' 1, 'ss02' 1;
+
+html {
+	font-family: 'Inter UI', sans-serif;
+	font-feature-settings: 'calt' 1, 'case' 1;
+}
+
+@supports (font-variation-settings: normal) {
+	html {
+		font-family: 'Inter UI var alt', sans-serif;
+	}
+}
 
 // Suppress default styling on Firefox for Android
 button, button:active, textarea, textarea:focus, input, input:focus {
@@ -337,6 +355,23 @@ div.paste-toolbox {
 	}
 }
 
+div.announcement {
+	background-color: @warning-background;
+	padding: 6px;
+	@media @media-tablet {
+		.box-sizing(border-box);
+	}
+	@media print {
+		display: none;
+	}
+
+	span {
+		font-size: @paste-subtitle-font-size;
+		line-height: 1em;
+		vertical-align: middle;
+	}
+}
+
 [data-placeholder]:not(:focus):not([data-div-placeholder-content]):before {
 	content: attr(data-placeholder);
 }
@@ -344,6 +379,7 @@ div.paste-toolbox {
 span.paste-title {
 	position: relative;
 	font-size: @paste-title-font-size;
+	font-feature-settings: @paste-title-font-features;
 	color: @paste-title-color;
 	vertical-align: middle;
 	@media @media-phone {

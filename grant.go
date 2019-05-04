@@ -21,7 +21,8 @@ type GrantStore struct {
 type GrantID string
 
 func (r *GrantStore) Save() error {
-	file, err := os.Create(r.filename)
+	asideFilename := r.filename + ".atomic"
+	file, err := os.Create(asideFilename)
 	if err != nil {
 		return err
 	}
@@ -29,8 +30,13 @@ func (r *GrantStore) Save() error {
 
 	enc := gob.NewEncoder(file)
 
-	// Returns nil if everything worked.
-	return enc.Encode(r)
+	err = enc.Encode(r)
+	if err != nil {
+		glog.Error("Failed to save grants: ", err)
+		return err
+	}
+
+	return os.Rename(asideFilename, r.filename)
 }
 
 func (r *GrantStore) NewGrant(id PasteID) GrantID {
@@ -64,7 +70,7 @@ func LoadGrantStore(filename string) *GrantStore {
 		err := dec.Decode(&gs)
 
 		if err != nil {
-			glog.Fatal("Failed to decode grants: ", err)
+			glog.Error("Failed to decode grants: ", err)
 		}
 	}
 	if gs == nil {

@@ -18,7 +18,8 @@ type ReportStore struct {
 }
 
 func (r *ReportStore) Save() error {
-	file, err := os.Create(r.filename)
+	asideFilename := r.filename + ".atomic"
+	file, err := os.Create(asideFilename)
 	if err != nil {
 		return err
 	}
@@ -26,8 +27,13 @@ func (r *ReportStore) Save() error {
 
 	enc := gob.NewEncoder(file)
 
-	// Returns nil if everything worked.
-	return enc.Encode(r)
+	err = enc.Encode(r)
+	if err != nil {
+		glog.Error("Failed to save reports: ", err)
+		return err
+	}
+
+	return os.Rename(asideFilename, r.filename)
 }
 
 func (r *ReportStore) Add(id PasteID, kind string) {
@@ -55,11 +61,12 @@ func LoadReportStore(filename string) *ReportStore {
 		dec := gob.NewDecoder(report_file)
 		err := dec.Decode(&decoded_reports)
 
-		if err != nil {
-			glog.Fatal("Failed to decode reports: ", err)
+		if err == nil {
+			decoded_reports.filename = filename
+			return decoded_reports
+		} else {
+			glog.Error("Failed to decode reports: ", err)
 		}
-		decoded_reports.filename = filename
-		return decoded_reports
 	}
 	return &ReportStore{Reports: map[PasteID]ReportInfo{}, filename: filename}
 }
