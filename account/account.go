@@ -64,7 +64,7 @@ type FilesystemStore struct {
 }
 
 func (f *FilesystemStore) Get(name string) *User {
-	userPath := filepath.Join(f.path, name)
+	userPath := filepath.Join(f.path, name + ".tmp")
 	var user *User
 
 	file, err := os.Open(userPath)

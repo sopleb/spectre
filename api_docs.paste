@@ -1,0 +1,55 @@
+* **DO**
+    * Use https
+        * Really. I don't allow paste encryption or authentication over http.
+        * Also, HSTS is turned on.
+    * Support [SNI](http://en.wikipedia.org/wiki/Server_Name_Indication)
+    * Use UTF-8
+        * Ghostbin uses UTF-8 ✓
+    * Use a reasonable User-Agent string to identify your client
+    * Expire your test pastes
+* **DO NOT**
+    * Post illegal content; Why would you want to get a cool pastebin service shut down for legal reasons?
+    * Spam the server with a ton of requests
+    * Be alarmed when you get back the same paste ID if you keep pasting the same thing
+* POST `/paste/new` (`application/x-www-form-urlencoded`)
+    * `text`: paste body, up to 1MB
+    * `password`: optional password
+    * `expire`: optional expiration, in ns/us/ms/s/m/h/d; nothing greater than fifteen days (`15d`)
+        * **Examples**: `30µs`, `10s`, `1h`, `15d`
+    * `lang`: language ID (`language.id`)
+        * **Examples**: `text`, `markdown`, `logos`
+    * Responses:
+        * 303 See Other (with Paste URL)
+            * Session cookie (keep for the ability to edit pastes.)
+        * 400 Bad Request
+            * You done fucked up, son.
+    * Examples
+        * Request
+
+```http
+POST /paste/new HTTP/1.1
+Host: ghostbin.com
+Content-Length: 39
+Content-Type: application/x-www-form-urlencoded
+
+text=Hello%20World&expire=10s&lang=text
+```
+
+        * Response
+
+```http
+HTTP/1.1 303 See Other
+Location: /paste/y5xr4
+Set-Cookie: session=...; Path=/; Expires=...; Max-Age=31536000
+```
+
+* GET `/paste/{id}/raw` [example](/paste/p3qcy/raw)
+    * This is probably the only way you should get pastes: I don't have a `/paste/{id}/rendered_without_the_UI` endpoint.
+* GET `/languages.json` [languages.json](/languages.json)
+    * This returns the list of supported languages, broken down by category.
+
+            languages.json := [...category...]
+            category       := { "name": string, "languages": [...language...] }
+            language       := { "id": string, "name": string, "alt_ids": [...string...] }
+
+    * Languages are to be identified by their canonical `id`, but any ID from `alt_ids` is acceptable.

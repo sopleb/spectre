@@ -761,6 +761,8 @@ func init() {
 			},
 		},
 	}
+
+	fmt.Println("Ghostbin ready")
 }
 
 func main() {

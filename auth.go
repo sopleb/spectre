@@ -96,9 +96,9 @@ func authLoginPostHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			reply.Reason = "account creation has been disabled"
+			/*reply.Reason = "account creation has been disabled"
 			reply.InvalidFields = []string{"username", "password", "confirm_password"}
-			return
+			return*/
 
 			if confirm == "" {
 				reply.Status = "moreinfo"
