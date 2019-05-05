@@ -43,7 +43,7 @@ Location: /paste/y5xr4
 Set-Cookie: session=...; Path=/; Expires=...; Max-Age=31536000
 ```
 
-* GET `/paste/{id}/raw` [example](/paste/p3qcy/raw)
+* GET `/paste/{id}/raw` [example](/paste/ss9qg/raw)
     * This is probably the only way you should get pastes: I don't have a `/paste/{id}/rendered_without_the_UI` endpoint.
 * GET `/languages.json` [languages.json](/languages.json)
     * This returns the list of supported languages, broken down by category.
