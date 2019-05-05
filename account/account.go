@@ -122,8 +122,8 @@ func (f *FilesystemStore) Save(user *User) error {
 	if err != nil {
 		return err
 	}
-	os.Remove(userPath)
-	os.Rename(tempPath, userPath)
+	defer os.Remove(userPath)
+	defer os.Rename(tempPath, userPath)
 	return nil
 }
 

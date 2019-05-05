@@ -64,7 +64,7 @@
 				this.clearPreference("defaultLanguage");
 			},
 			defaultExpiration: function() {
-				return this.getPreference("defaultExpiration", "-1");
+				return this.getPreference("defaultExpiration", "2d");
 			},
 			setDefaultExpiration: function(value) {
 				this.setPreference("defaultExpiration", value);
