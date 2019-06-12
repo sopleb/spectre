@@ -2,6 +2,7 @@ github.com/DHowett/go-xattr v0.0.0-20181227225257-7d72f4cdfe6d h1:dbMA9OToibgoRO
 github.com/DHowett/go-xattr v0.0.0-20181227225257-7d72f4cdfe6d/go.mod h1:PQBmhxX6+qWCBi2awpRGePTsV9pEVD9jA1S7E4TehFM=
 github.com/DHowett/gotimeout v0.0.0-20161206082608-24e8dccd7474 h1:72EE6He4yAqwcxWjvfqrizdBcELYy5gGO+tf63B2tWM=
 github.com/DHowett/gotimeout v0.0.0-20161206082608-24e8dccd7474/go.mod h1:lcqSBShWXRtf5fqtPWNtvz6kotDx9AOcipMBTN5z12c=
+github.com/cj123/sessions v1.1.5/go.mod h1:DZy9PjoRy0ESlWywkQPAPlgZ5fAb3v+srKSSihnIKVU=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/groupcache v0.0.0-20181024230925-c65c006176ff h1:kOkM9whyQYodu09SJ6W3NCsHG7crFaJILQ22Gozp3lg=
