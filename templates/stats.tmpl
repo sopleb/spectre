@@ -1,0 +1,25 @@
+{{define "stats_title"}}Stats{{end}}
+{{define "stats_body"}}
+<div class="paste-toolbox">
+	{{template "home-button"}}
+	<span class="paste-title">
+		<strong>Stats</strong>
+	</span>
+</div>
+<div class="content">
+	<ul class="paste-list">
+	    <li>
+	        <p>Uptime: {{.Obj.uptime}}</p>
+	    </li>
+	    <li>
+            <p>Cached pastes: {{.Obj.cached}}</p>
+        </li>
+	    <li>
+            <p>Expiring pastes: {{.Obj.expiring}}</p>
+        </li>
+	    <li>
+            <p>Used memory: {{.Obj.mem_alloc}}</p>
+        </li>
+	</ul>
+</div>
+{{end}}
