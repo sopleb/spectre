@@ -1,4 +1,4 @@
-SPECTRE_ENV=production
-SPECTRE_BRAND=MenuDocs
+export SPECTRE_ENV=production
+export SPECTRE_BRAND=MenuDocs
 
 ./ghostbin -addr=127.0.0.1:7000
