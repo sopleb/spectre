@@ -64,13 +64,13 @@
 				this.clearPreference("defaultLanguage");
 			},
 			defaultExpiration: function() {
-				return this.getPreference("defaultExpiration", "2d");
+				return this.getPreference("defaultExpiration-md", "2d");
 			},
 			setDefaultExpiration: function(value) {
-				this.setPreference("defaultExpiration", value);
+				this.setPreference("defaultExpiration-md", value);
 			},
 			clearDefaultExpiration: function() {
-				this.clearPreference("defaultExpiration");
+				this.clearPreference("defaultExpiration-md");
 			},
 			setPreference: function(k, v) {
 				localStorage[k] = v;
