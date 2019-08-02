@@ -25,3 +25,4 @@ accounts/*
 node_modules
 build
 .tmpl
+out/

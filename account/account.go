@@ -111,19 +111,31 @@ func (f *FilesystemStore) Create(name string) *User {
 func (f *FilesystemStore) Save(user *User) error {
 	userPath := filepath.Join(f.path, user.Name)
 	tempPath := userPath + ".tmp"
-	file, err := os.Create(tempPath)
-	if err != nil {
-		return err
+
+	_, err := os.Stat(tempPath)
+
+	if os.IsNotExist(err) {
+		file, err := os.Create(tempPath)
+		if err != nil {
+			return err
+		}
+
+		defer file.Close()
+		enc := gob.NewEncoder(file)
+		err = enc.Encode(user)
+		if err != nil {
+			return err
+		}
+
+		_, err = os.Stat(userPath)
+
+		if os.IsExist(err) {
+			defer os.Remove(userPath)
+		}
+
+		defer os.Rename(tempPath, userPath)
 	}
 
-	defer file.Close()
-	enc := gob.NewEncoder(file)
-	err = enc.Encode(user)
-	if err != nil {
-		return err
-	}
-	defer os.Remove(userPath)
-	defer os.Rename(tempPath, userPath)
 	return nil
 }
 

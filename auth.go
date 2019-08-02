@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"sync"
 	"time"
@@ -139,75 +138,6 @@ func authLoginPostHandler(w http.ResponseWriter, r *http.Request) {
 					reply.InvalidFields = []string{"username", "password"}
 				}
 			}
-		}
-	} else if loginType == "persona" {
-		// BrowserID Assertion
-		reply.Type = "persona"
-
-		assertion := r.FormValue("assertion")
-		if assertion == "" {
-			reply.Reason = "persona login requested without an assertion"
-			reply.InvalidFields = []string{"assertion"}
-			return
-		}
-
-		audience := "https://ghostbin.com"
-		if !RequestIsHTTPS(r) {
-			audience = "http://localhost:8080"
-		}
-		verifyResponse, err := http.PostForm("https://verifier.login.persona.org/verify", url.Values{
-			"assertion": {assertion},
-			"audience":  {audience},
-		})
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			glog.Error("Persona Verify Request Failed: ", err)
-			reply.Reason = "persona verification failed"
-			reply.ExtraData["error"] = err.Error()
-			return
-		}
-		defer verifyResponse.Body.Close()
-		dec := json.NewDecoder(verifyResponse.Body)
-
-		var verifyResponseJSON map[string]interface{}
-		err = dec.Decode(&verifyResponseJSON)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			glog.Error("Persona Verify JSON Decode Failed: ", err)
-			reply.Reason = "persona verification failed"
-			reply.ExtraData["error"] = err.Error()
-			return
-		}
-
-		if verifyResponseJSON["status"].(string) == "okay" {
-			healthServer.IncrementMetric("user.login.persona")
-			email := verifyResponseJSON["email"].(string)
-			user = userStore.Get(email)
-			if user == nil {
-				healthServer.IncrementMetric("user.persona.create.rejected")
-				reply.Reason = "new Persona accounts cannot be created."
-				return
-			}
-
-			if persona, ok := user.Values["persona"].(bool); !ok || !persona {
-				healthServer.IncrementMetric("user.persona.tried_after_migrate")
-				reply.Reason = "this is not an |> E-Mail account."
-				return
-			}
-
-			user.Values["persona"] = true
-			reply.ExtraData["persona"] = email
-
-			healthServer.IncrementMetric("user.promotions.requested")
-			reply.Status = "moreinfo"
-			reply.Reason = "user must create a password to leave Persona"
-			reply.InvalidFields = []string{"confirm_password", "password"}
-			promoteToken, _ := generateRandomBase32String(20, 32)
-			ephStore.Put("UPG|"+promoteToken, user.Name, 30*time.Minute)
-			reply.ExtraData["promote_token"] = promoteToken
-			return
-		} else {
-			reply.Reason = verifyResponseJSON["reason"].(string)
 		}
 	} else if loginType == "token" {
 		// Authentication Token
