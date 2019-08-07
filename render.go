@@ -105,7 +105,6 @@ func RequiredModelObjectHandler(lookup ModelLookupFunc, fn ModelRenderFunc) http
 				panic(err)
 			}
 		} else {
-			//fmt.Println(obj)
 			fn(obj, w, r)
 		}
 	})

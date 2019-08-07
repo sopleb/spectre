@@ -402,8 +402,6 @@ func lookupPasteWithRequest(r *http.Request) (Model, error) {
 	enc := false
 	p, err := pasteStore.Get(id, key)
 
-	fmt.Println(p)
-
 	if _, ok := err.(PasteEncryptedError); ok {
 		enc = true
 	}
@@ -624,6 +622,7 @@ func pasteDestroyCallback(p *Paste) {
 }
 
 var pasteStore *FilesystemPasteStore
+var staticPasteStore *FilesystemPasteStore
 var pasteExpirator *gotimeout.Expirator
 var sessionStore *sessions.FilesystemStore
 var clientOnlySessionStore *sessions.CookieStore
@@ -633,6 +632,7 @@ var userStore account.AccountStore
 var pasteRouter *mux.Router
 var router *mux.Router
 var healthServer *HealthServer
+var apiPaste *Paste
 
 type args struct {
 	root, addr string
@@ -654,6 +654,35 @@ func (a *args) parse() {
 	a.parseOnce.Do(func() {
 		flag.Parse()
 	})
+}
+
+func createApiPaste() {
+	apiPaste = &Paste{
+		ID: "api_docs.paste",
+		Language: &Language{
+			Name:                "Markdown",
+			ID:                  "markdown",
+			Formatter:           "markdown",
+			AlternateIDs:        nil,
+			Extensions:          []string{"md"},
+			MIMETypes:           []string{"text/x-markdown"},
+			DisplayStyle:        "markdown",
+			SuppressLineNumbers: true,
+		},
+		Encrypted:        false,
+		Expiration:       "-1",
+		Title:            "Api documentation",
+		store:            staticPasteStore,
+		mtime:            time.Time{},
+		exptime:          time.Time{},
+		encryptionKey:    nil,
+		encryptionSalt:   nil,
+		encryptionMethod: "",
+	}
+}
+
+func getApiPaste(r *http.Request) (Model, error) {
+	return apiPaste, nil
 }
 
 var arguments = &args{}
@@ -757,6 +786,10 @@ func init() {
 	pasteStore = NewFilesystemPasteStore(pastedir)
 	pasteStore.PasteDestroyCallback = PasteCallback(pasteDestroyCallback)
 
+	statiPasteDir := filepath.Join(arguments.root, "static_pastes")
+	os.Mkdir(statiPasteDir, 0700)
+	staticPasteStore = NewFilesystemPasteStore(statiPasteDir)
+
 	pasteExpirator = gotimeout.NewExpirator(filepath.Join(arguments.root, "expiry.gob"), &ExpiringPasteStore{pasteStore})
 	ephStore = gotimeout.NewMap()
 
@@ -771,6 +804,8 @@ func init() {
 			},
 		},
 	}
+
+	createApiPaste()
 
 	fmt.Println("Ghostbin ready")
 }
@@ -949,7 +984,15 @@ func main() {
 	router.Methods("GET").Path("/auth/token/{token}").Handler(http.HandlerFunc(authTokenPageHandler)).Name("auth_token_login")
 
 	router.Path("/").Handler(RenderPageHandler("index"))
+	router.Path("/test").Handler(RenderPageHandler("index"))
+
+	router.Methods("GET").
+		Path("/api").
+		//Handler(RenderPageHandler("index"))
+		Handler(RequiredModelObjectHandler(getApiPaste, RenderPageForModel("paste_show_static")))
+
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("public")))
+
 	http.Handle("/", &fourOhFourConsumerHandler{userLookupWrapper{router}})
 
 	var addr string = arguments.addr

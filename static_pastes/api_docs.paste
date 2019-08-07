@@ -6,7 +6,7 @@
     * Use UTF-8
         * Ghostbin uses UTF-8 ✓
     * Use a reasonable User-Agent string to identify your client
-    * Expire your test pastes
+    * Expire your test pastes within a few hours
 * **DO NOT**
     * Post illegal content; Why would you want to get a cool pastebin service shut down for legal reasons?
     * Spam the server with a ton of requests
@@ -14,7 +14,7 @@
 * POST `/paste/new` (`application/x-www-form-urlencoded`)
     * `text`: paste body, up to 1MB
     * `password`: optional password
-    * `expire`: optional expiration, in ns/us/ms/s/m/h/d; nothing greater than fifteen days (`15d`)
+    * `expire`: expiration, in ns/us/ms/s/m/h/d; nothing greater than fifteen days (`15d`)
         * **Examples**: `30µs`, `10s`, `1h`, `15d`
     * `lang`: language ID (`language.id`)
         * **Examples**: `text`, `markdown`, `logos`
