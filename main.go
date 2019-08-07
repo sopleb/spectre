@@ -395,10 +395,15 @@ func lookupPasteWithRequest(r *http.Request) (Model, error) {
 		if _key, ok := pasteKeys[id]; ok {
 			key = _key
 		}
+
+		fmt.Println(pasteKeys)
 	}
 
 	enc := false
 	p, err := pasteStore.Get(id, key)
+
+	fmt.Println(p)
+
 	if _, ok := err.(PasteEncryptedError); ok {
 		enc = true
 	}

@@ -4,6 +4,7 @@ formatters:
     func: commandFormatter
     args:
     - /usr/local/bin/pygmentize
+#    - pygmentize
     - "-f"
     - html
     - "-l"
