@@ -70,6 +70,7 @@ func (e PasteTooLargeError) StatusCode() int {
 	return http.StatusBadRequest
 }
 
+/// <editor-fold name="route handlers">
 func getPasteJSONHandler(o Model, w http.ResponseWriter, r *http.Request) {
 	p := o.(*Paste)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -620,6 +621,7 @@ func pasteDestroyCallback(p *Paste) {
 
 	healthServer.IncrementMetric("paste.deleted")
 }
+/// </editor-fold>
 
 var pasteStore *FilesystemPasteStore
 var staticPasteStore *FilesystemPasteStore
@@ -687,6 +689,7 @@ func getApiPaste(r *http.Request) (Model, error) {
 
 var arguments = &args{}
 
+/// <editor-fold name="init func">
 func init() {
 	// N.B. this should not be necessary.
 	gob.Register(map[PasteID][]byte(nil))
@@ -809,6 +812,7 @@ func init() {
 
 	fmt.Println("Ghostbin ready")
 }
+/// </editor-fold>
 
 func main() {
 	ReloadAll()
@@ -852,6 +856,7 @@ func main() {
 	router = mux.NewRouter()
 	pasteRouter = router.PathPrefix("/paste").Subrouter()
 
+	/// <editor-fold name="paste router">
 	pasteRouter.Methods("GET").
 		Path("/new").
 		Handler(RedirectHandler("/"))
@@ -926,7 +931,9 @@ func main() {
 		MatcherFunc(NonHTTPSMuxMatcher).
 		Path("/{id}/authenticate").
 		Handler(RenderPageHandler("paste_authenticate_disallowed"))
+	/// </editor-fold>
 
+	/// <editor-fold name="main router">
 	router.Path("/admin").Handler(requiresUserPermission("admin", RenderPageHandler("admin_home")))
 
 	router.Path("/admin/reports").Handler(requiresUserPermission("admin", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -984,14 +991,14 @@ func main() {
 	router.Methods("GET").Path("/auth/token/{token}").Handler(http.HandlerFunc(authTokenPageHandler)).Name("auth_token_login")
 
 	router.Path("/").Handler(RenderPageHandler("index"))
-	router.Path("/test").Handler(RenderPageHandler("index"))
 
 	router.Methods("GET").
 		Path("/api").
-		//Handler(RenderPageHandler("index"))
 		Handler(RequiredModelObjectHandler(getApiPaste, RenderPageForModel("paste_show_static")))
 
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("public")))
+
+	/// </editor-fold>
 
 	http.Handle("/", &fourOhFourConsumerHandler{userLookupWrapper{router}})
 
