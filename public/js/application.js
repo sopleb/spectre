@@ -409,12 +409,17 @@ $(function() {
 
 				$(window).on("load popstate", function() {
 					var n = lineFromHash(window.location.hash);
+
 					if(n) {
 						var linespan = $("span:nth-child("+n+")", lineNumberTrough);
+
 						if(linespan.length > 0) {
 							setSelectedLineNumber(n);
 							positionLinebar.call(linespan.get(0), permabar);
-							linespan.scrollMinimal();
+
+							setTimeout(() => {
+								linespan.scrollMinimal(); //
+							}, 250);
 						}
 					}
 				});

@@ -7,7 +7,7 @@
 		var n="";
 		var i = 0;
 		for(i=0; i < lines; i++) {
-			n += "<span>"+(i+1)+"</span>";
+			n += '<span id="L'+(i+1)+'">'+(i+1)+"</span>";
 		}
 		lineNumberTrough.html(n);
 
@@ -24,7 +24,7 @@
 		if (cTop < windowTop) {
 			$(window).scrollTop(cTop);
 		} else if (cTop + cHeight > windowTop + visibleHeight) {
-			$(window).scrollTop(cTop - visibleHeight + cHeight);
+			$(window).scrollTop(cTop - (visibleHeight / 2) );
 		}
 	};
 	$.fn.onMediaQueryChanged = function(mediaQuery, callback) {
