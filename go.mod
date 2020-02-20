@@ -16,3 +16,5 @@ require (
 )
 
 replace github.com/gorilla/sessions => github.com/cj123/sessions v1.1.5
+
+go 1.13
