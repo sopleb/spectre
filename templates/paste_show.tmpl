@@ -1,4 +1,4 @@
-{{define "paste_show_title"}}{{.Obj.ID}}{{end}}
+{{define "paste_show_title"}}{{with .Obj.Title}}{{.}}{{else}}Paste {{.Obj.ID}}{{end}}{{end}}
 {{define "paste_show_body"}}
 <div class="paste-toolbox unselectable">
 	{{template "home-button"}}
