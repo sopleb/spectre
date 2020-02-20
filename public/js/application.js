@@ -484,7 +484,7 @@ $(function() {
 	})();
 
 	$('[autofocus]:not(:focus)').eq(0).focus();
-	$('[title]').tooltip({
+	$('[title]:not([data-disable-tooltip])').tooltip({
 		trigger: "hover",
 		placement: "bottom",
 		container: "body",

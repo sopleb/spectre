@@ -36,7 +36,7 @@ var VERSION string = "<local build>"
 
 const PASTE_CACHE_MAX_ENTRIES int = 1000
 const PASTE_MAXIMUM_LENGTH ByteSize = 1048576 // 1 MB
-const MAX_EXPIRE_DURATION time.Duration = 15 * 24 * time.Hour
+const MAX_EXPIRE_DURATION time.Duration = 15 * 24 * time.Hour // 15 days (-1 to enable forever)
 
 type PasteAccessDeniedError struct {
 	action string
