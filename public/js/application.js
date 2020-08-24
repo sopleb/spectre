@@ -1,526 +1,699 @@
-(function(window) {
-	"use strict";
-	window.Spectre = function() {
-		var _s2Languages;
-		var _languageMap;
-		return {
-			formatDuration: function(seconds) {
-				seconds = seconds | 0;
-				if(seconds < 60) {
-					return ""+seconds+"s";
-				} else if(seconds < 3600) {
-					return ""+((seconds/60)|0)+"m"+((seconds%60)|0)+"s";
-				} else { 
-					// if(seconds < 86400) {
-					return ""+((seconds/3600)|0)+"h"+(((seconds%3600)/60)|0)+"m"+((seconds%60)|0)+"s";
-				}
-			},
-			loadLanguages: function() {
-				var s2Languages = {
-					more: false,
-					results: [],
-				};
-				var langmap = {};
-				$.ajax({
-					url: "/languages.json",
-					async: false,
-					dataType: "json",
-					cache: true,
-					success: function(_languages) {
-						$.each(_languages, function(i,cat) {
-							var s2cat = cat;
-							s2cat.text = cat.name;
-							s2cat.children = cat.languages;
-							$.each(cat.languages, function(i, lang) {
-								lang.text = lang.name;
+(function (window) {
+  window.Spectre = function () {
+    let _s2Languages;
+    let _languageMap = {};
+    return {
+      formatDuration: function (seconds) {
+        seconds = seconds | 0;
+        if (seconds < 60) {
+          return "" + seconds + "s";
+        } else if (seconds < 3600) {
+          return "" + ((seconds / 60) | 0) + "m" + ((seconds % 60) | 0) + "s";
+        } else {
+          // if(seconds < 86400) {
+          return "" + ((seconds / 3600) | 0) + "h" + (((seconds % 3600) / 60) | 0) + "m" + ((seconds % 60) | 0) + "s";
+        }
+      },
+      loadLanguages: async function () {
+        const s2Languages = [];
+        const langmap = {};
 
-								langmap[lang.id] = lang;
-								if(lang.alt_ids) {
-									$.each(lang.alt_ids, function(i, n) { langmap[n] = lang; });
-								}
-							});
-							s2Languages.results.push(s2cat);
-						});
-					}
-				});
-				_languageMap = langmap;
-				_s2Languages = s2Languages;
-				return;
-			},
-			languagesForSelect2: function() {
-				return _s2Languages;
-			},
-			languageNamed: function(name) {
-				if(typeof name === "undefined") return undefined;
-				return _languageMap[name];
-			},
-			defaultLanguage: function() {
-				return this.languageNamed(this.getPreference("defaultLanguage"));
-			},
-			setDefaultLanguage: function(lang) {
-				this.setPreference("defaultLanguage", lang.id);
-			},
-			clearDefaultLanguage: function() {
-				this.clearPreference("defaultLanguage");
-			},
-			defaultExpiration: function() {
-				return this.getPreference("defaultExpiration-md", "2d");
-			},
-			setDefaultExpiration: function(value) {
-				this.setPreference("defaultExpiration-md", value);
-			},
-			clearDefaultExpiration: function() {
-				this.clearPreference("defaultExpiration-md");
-			},
-			setPreference: function(k, v) {
-				localStorage[k] = v;
-			},
-			getPreference: function(k, dflt) {
-				return localStorage[k] || dflt;
-			},
-			clearPreference: function(k) {
-				delete localStorage[k];
-			},
-			updatePartial: function(name) {
-				$.ajax({
-					type: "GET",
-					url: "/partial/"+name,
-					async: false,
-					dataType: "html",
-					success: function(reply) {
-						$("#partial_container_"+name).html(reply);
-					}
-				});
-			},
-			shouldRefreshPageOnLogin: function() {
-				// Right now, only refresh for session (the only other page
-				// with a login form)
-				return (window.location.pathname.match(/session/)||[]).length > 0;
-			},
-			refreshPage: function() {
-				window.location = window.location;
-			},
-			_loginReplyHandler: function(reply) {
-				$("#partial_container_login_logout .blocker").fadeOut("fast");
-				switch(reply.status) {
-					case "valid":
-						$("#login_error").text("").hide(400);
-						if(!Spectre.shouldRefreshPageOnLogin()) {
-							Spectre.updatePartial("login_logout");
-							Spectre.displayFlash({type: "success", body: "Successfully logged in."});
-						} else {
-							Spectre.refreshPage();
-						}
-						break;
-					case "moreinfo":
-						$("#login_error").text("").hide(400);
-						if(typeof reply.invalid_fields !== "undefined") {
-							$.each(reply.invalid_fields, function(i, v) {
-								var field = $("form#loginForm input[name="+v+"]");
-								field.parents(".control-group").eq(0).show(400);
-								field.focus();
-							});
-						}
+        const languages = await fetch('/languages.json', {cache: 'no-cache'})
+          .then((r) => r.json());
 
-						if(typeof reply.reason !== "undefined") {
-							$("#login_moreinfo").text(reply.reason).show(400);
-						}
-						break;
-					case "invalid":
-						if(typeof reply.invalid_fields !== "undefined") {
-							$.each(reply.invalid_fields, function(i, v) {
-								$("form#loginForm input[name="+v+"]").parents(".control-group").eq(0).addClass("error");
-							});
-						}
-						if(typeof reply.reason !== "undefined") {
-							$("#login_error").text(reply.reason).show(400);
-						}
-						break;
-				}
-			},
-			login: function(data) {
-				$("#partial_container_login_logout .blocker").fadeIn("fast");
-				$("form#loginForm .control-group").removeClass("error");
-				$.ajax({
-					type: "POST",
-					url: "/auth/login",
-					async: true,
-					dataType: "json",
-					data: data,
-					success: Spectre._loginReplyHandler,
-					error: function() {
-						$("#partial_container_login_logout .blocker").fadeOut("fast");
-					},
-				});
-			},
-			logout: function() {
-				$("#partial_container_login_logout .blocker").fadeIn("fast");
-				$.ajax({
-					type: "POST",
-					url: "/auth/logout",
-					async: true,
-					success: function() {
-						$("#partial_container_login_logout .blocker").fadeOut("fast");
-						if(!Spectre.shouldRefreshPageOnLogin()) {
-							Spectre.updatePartial("login_logout");
-							Spectre.displayFlash({type: "success", body: "Successfully logged out."});
-						} else {
-							Spectre.refreshPage();
-						}
-					},
-					failure: function(wat) {
-						$("#partial_container_login_logout .blocker").fadeOut("fast");
-						alert(wat);
-					}
-				});
-			},
-			displayFlash: function(flash) {
-				var container = $("#flash-container");
-				var newFlash = container.find("#flash-template").clone();
-				newFlash.removeAttr('id').find('p').text(flash.body);
-				if(flash.type) {
-					newFlash.addClass('well-' + flash.type);
-				}
-				container.append(newFlash);
-				container.show();
+        for (const cat of languages) {
+          for (const lang of cat.languages) {
+            // TODO: find only needed props
+            langmap[lang.id] = lang;
 
-				window.setTimeout(function() {
-					newFlash.fadeIn(200);
-					window.setTimeout(function() {
-						newFlash.fadeOut(400, function() {
-							container.hide();
-							newFlash.remove();
-						});
-					}, 4000);
-				}, 500);
-			},
-		};
-	}();
+            if (lang.alt_ids) {
+              lang.alt_ids.forEach((alt) => {
+                langmap[alt] = lang;
+              });
+            }
+          }
+
+          s2Languages.push({
+            label: cat.name,
+            choices: cat.languages
+          });
+        }
+
+        _languageMap = langmap;
+        _s2Languages = s2Languages;
+      },
+      languagesForSelect2: function () {
+        return _s2Languages;
+      },
+      languageNamed: function (name) {
+        if (typeof name === "undefined") return undefined;
+        return _languageMap[name];
+      },
+      defaultLanguage: function () {
+        return this.languageNamed(this.getPreference("defaultLanguage"));
+      },
+      setDefaultLanguage: function (lang) {
+        this.setPreference("defaultLanguage", lang.id);
+      },
+      clearDefaultLanguage: function () {
+        this.clearPreference("defaultLanguage");
+      },
+      defaultExpiration: function () {
+        return this.getPreference("defaultExpiration-md", "2d");
+      },
+      setDefaultExpiration: function (value) {
+        this.setPreference("defaultExpiration-md", value);
+      },
+      clearDefaultExpiration: function () {
+        this.clearPreference("defaultExpiration-md");
+      },
+      setPreference: function (k, v) {
+        localStorage[k] = v;
+      },
+      getPreference: function (k, dflt) {
+        return localStorage[k] || dflt;
+      },
+      clearPreference: function (k) {
+        delete localStorage[k];
+      },
+      updatePartial: function (name) {
+        return fetch(`/partial/${name}`)
+          .then((r) => r.text())
+          .then((reply) => {
+            document.querySelector(`#partial_container_${name}`).innerHTML = reply;
+            return reply;
+          });
+      },
+      shouldRefreshPageOnLogin: function () {
+        // Right now, only refresh for session (the only other page
+        // with a login form)
+        return (window.location.pathname.match(/session/) || []).length > 0;
+      },
+      refreshPage: function () {
+        window.location.reload();
+      },
+      _loginReplyHandler: async function (reply) {
+        const loginError = document.querySelector('#login_error');
+        const resetLoginError = () => {
+          animateCSS(loginError, 'fadeOut').then(() => {
+            loginError.style.display = 'none';
+            loginError.innerHTML = '';
+          });
+        };
+
+        switch (reply.status) {
+          case "valid":
+            resetLoginError();
+            if (Spectre.shouldRefreshPageOnLogin()) {
+              Spectre.refreshPage();
+            } else {
+              await Spectre.updatePartial("login_logout");
+              Spectre.displayFlash({type: "success", body: "Successfully logged in."});
+            }
+
+            break;
+          case "moreinfo":
+            resetLoginError();
+            if (typeof reply.invalid_fields !== "undefined") {
+              for (const fieldName of reply.invalid_fields) {
+                const field = document.querySelector(`form#loginForm input[name="${fieldName}"]`);
+                const parentGroup = findParentWithClass(field, 'control-group');
+
+                parentGroup.style.display = 'block';
+                animateCSS(parentGroup, 'fadeIn').then(() => {
+                  field.focus();
+                });
+              }
+            }
+
+            if (typeof reply.reason !== "undefined") {
+              const moreInfo = document.querySelector('#login_moreinfo');
+
+              moreInfo.innerHTML = reply.reason;
+              moreInfo.style.display = 'block';
+
+              animateCSS(moreInfo, 'fadeIn');
+            }
+            break;
+          case "invalid":
+            if (typeof reply.invalid_fields !== "undefined") {
+              for (const fieldName of reply.invalid_fields) {
+                const field = document.querySelector(`form#loginForm input[name="${fieldName}"]`);
+                const parentGroup = findParentWithClass(field, 'control-group');
+
+                parentGroup.classList.add('error');
+              }
+            }
+
+            if (typeof reply.reason !== "undefined") {
+              loginError.innerHTML = reply.reason;
+              loginError.style.display = 'block';
+
+              animateCSS(loginError, 'fadeIn');
+            }
+            break;
+        }
+      },
+      login: function (data) {
+        const blocker = document.querySelector('#partial_container_login_logout .blocker');
+
+        blocker.classList.toggle('hide');
+        animateCSS(blocker, 'fadeIn');
+
+        for (const el of document.querySelectorAll("form#loginForm .control-group")) {
+          el.classList.remove("error");
+        }
+
+        const formData = new FormData();
+
+        Object.entries(data).forEach(([key, value]) => {
+          formData.append(key, String(value));
+        });
+
+        fetch('/auth/login', {
+          method: 'POST',
+          credentials: 'same-origin',
+          body: formData
+        })
+          .then((r) => {
+            animateCSS(blocker, 'fadeOut').then(() => {
+              blocker.classList.toggle('hide');
+            });
+
+            return r.json();
+          })
+          .then((res) => Spectre._loginReplyHandler(res))
+          .catch(() => {
+            //
+          });
+      },
+      logout: function () {
+        const blocker = document.querySelector('#partial_container_login_logout .blocker');
+
+        blocker.style.display = 'block';
+        animateCSS(blocker, 'fadeIn');
+
+        fetch('/auth/logout', {
+          method: 'POST',
+          credentials: 'same-origin'
+        })
+          .then(async () => {
+            animateCSS(blocker, 'fadeOut').then(() => {
+              blocker.style.display = 'none';
+            });
+
+            if (Spectre.shouldRefreshPageOnLogin()) {
+              Spectre.refreshPage();
+            } else {
+              await Spectre.updatePartial("login_logout");
+              Spectre.displayFlash({type: "success", body: "Successfully logged out."});
+            }
+          })
+          .catch((wat) => {
+            alert(wat);
+          });
+      },
+      displayFlash: function (flash) {
+        const container = document.querySelector("#flash-container");
+        const newFlash = container.querySelector("#flash-template").cloneNode(true);
+
+        newFlash.removeAttribute('id');
+        newFlash.querySelector('p').innerHTML = flash.body;
+
+        if (flash.type) {
+          newFlash.classList.add('well-' + flash.type);
+        }
+
+        container.appendChild(newFlash);
+        container.style.display = 'block';
+
+        setTimeout(() => {
+          newFlash.style.display = 'block';
+          animateCSS(newFlash, 'fadeIn');
+
+          setTimeout(() => {
+            animateCSS(newFlash, 'fadeOut').then(() => {
+              container.style.display = 'none';
+              newFlash.remove();
+            });
+          }, 4000);
+        }, 500);
+      },
+    };
+  }();
 })(window);
 
-$(function() {
-	"use strict";
+document.addEventListener('DOMContentLoaded', async () => {
+  if (docCookies.hasItem("flash")) {
+    const flash = JSON.parse(atob(docCookies.getItem("flash")));
+    docCookies.removeItem("flash", "/");
+    Spectre.displayFlash(flash);
+  }
 
-	var pasteForm = $("#pasteForm");
-	var code = $("#code"), codeeditor = $("#code-editor");
-	if(pasteForm.length > 0) {
-		// Initialize the form.
-		var langbox = pasteForm.find("#langbox");
-		var context = pasteForm.data("context");
+  const codeEditor = document.querySelector('#code-editor');
+  const code = document.querySelector('#code');
+  const pasteForm = document.querySelector('#pasteForm');
 
-		Spectre.loadLanguages();
+  if (pasteForm) {
+    const context = pasteForm.dataset.context;
+    const langbox = document.getElementById('choices-multiple-groups');
 
-		langbox.select2({
-			data: Spectre.languagesForSelect2(),
-			matcher: function(term, text, lang) {
-				// The ifs here are blown apart so that we might short-circuit.
-				if(!lang.id) return false;
-				if(lang.name.toUpperCase().indexOf((''+term).toUpperCase()) >= 0) return true;
-				if(lang.id.toUpperCase().indexOf((''+term).toUpperCase()) >= 0) return true;
-				for(var i in lang.alt_ids) {
-					if(lang.alt_ids[i].toUpperCase().indexOf((''+term).toUpperCase()) >= 0) return true;
-				}
-				return false;
-			},
-		});
-		var lang = Spectre.languageNamed(langbox.data("selected")) ||
-				Spectre.defaultLanguage() ||
-				Spectre.languageNamed("text");
-		langbox.select2("data", lang);
 
-		if(context === "new") {
-			pasteForm.find("input[name='expire']").val(Spectre.defaultExpiration());
+    const choices = new Choices(langbox, {
+      placeholder: true,
+      shouldSort: false,
+    });
 
-			var optModal = $("#optionsModal");
-			optModal.modal({show: false});
+    const langLoader = async () => {
+      await Spectre.loadLanguages();
 
-			optModal.find("input[type='checkbox']").on("change", function() {
-				Spectre.setPreference($(this).data("gb-key"), this.checked ? "true" : "false");
-			}).each(function() {
-				this.checked = Spectre.getPreference($(this).data("gb-key"), "false") === "true";
-			});
+      return Spectre.languagesForSelect2();
+    };
 
-			$("#optionsButton").on("click", function() {
-				optModal.modal("show");
-			});
-		}
-		pasteForm.on('submit', function() {
-			if((codeeditor.val().match(/[^\s]/)||[]).length !== 0) {
-				if(context === "new") {
-					if(Spectre.getPreference("saveExpiration", "false") === "true") {
-						Spectre.setDefaultExpiration(pasteForm.find("input[name='expire']").val());
-					} else {
-						Spectre.clearDefaultExpiration();
-					}
+    choices.setChoices(langLoader, 'id', 'name', true).then(() => {
+      const lang = Spectre.languageNamed(langbox.dataset.selected) || Spectre.defaultLanguage() || Spectre.languageNamed("text");
 
-					if(Spectre.getPreference("saveLanguage", "false") === "true") {
-						Spectre.setDefaultLanguage(langbox.select2("data"));
-					} else {
-						Spectre.clearDefaultLanguage();
-					}
-				}
-				pasteForm.find("input[name='title']").val($("#editable-paste-title").text())
-			} else {
-				$("#deleteModal, #emptyPasteModal").modal("show");
-				return false;
-			}
-		});
-		$("#editable-paste-title").keypress(function(e) {
-			if(e.which == 13) {
-				$(codeeditor).focus();
-				return false;
-			}
-			return true;
-		});
-	}
+      choices.setChoiceByValue(lang.id);
+    });
 
-	(function(){
-		var controls = $("#paste-controls");
-		if(controls.length === 0) return;
+    // https://github.com/jshjohnson/Choices
 
-		controls.onMediaQueryChanged("screen and (max-width: 767px)", function(mql) {
-			this.detach();
-			var newParent;
-			if(mql.matches) {
-				newParent = $("#phone-paste-control-container");
-			} else {
-				newParent = $("#desktop-paste-control-container");
-			}
-			newParent.prepend(this);
-		});
-	})();
-	(function(){
-		var encModal = $("#encryptModal");
-		if(encModal.length === 0) return;
+    if (context === 'new') {
+      pasteForm.querySelector('input[name="expire"]').value = Spectre.defaultExpiration();
 
-		encModal.modal({show: false});
-		var	modalPasswordField = encModal.find("input[type='password']"),
-			pastePasswordField = pasteForm.find("input[name='password']");
 
-		modalPasswordField.keypress(function(e) {
-			if(e.which === 13) {
-				encModal.modal("hide");
-				return false;
-			}
-		});
+      const optionsModal = document.querySelector('#optionsModal');
+      const optionsButton = document.querySelector('#optionsButton');
+      const optionsModalInstance = new BSN.Modal(optionsModal, { keyboard: true, backdrop: false });
 
-		var setEncrypted = function(encrypted) {
-			$("#encryptionIcon").removeClass("icon-lock icon-lock-open-alt").addClass(encrypted ? "icon-lock" : "icon-lock-open-alt");
-			$("#encryptionButton .button-data-label").text(encrypted ? "On" : "");
-		};
+      optionsButton.addEventListener('click', () => {
+        optionsModalInstance.show();
+      });
 
-		encModal.on("show", function() {
-			modalPasswordField.val(pastePasswordField.val());
-		}).on("shown", function() {
-			$(this).find("input").eq(0).focus().select();
-		}).on("hidden", function() {
-			pastePasswordField.val(modalPasswordField.val());
-			setEncrypted($(this).find("input").val().length > 0);
-		});
+      Array.from(
+        optionsModal.querySelectorAll('input[type="checkbox"]')
+      ).forEach((cb) => {
+        cb.checked = Spectre.getPreference(cb.dataset.gbKey, 'false') === 'true';
 
-		$("#encryptionButton").on("click", function() {
-			encModal.modal("show");
-		});
-	})();
-	(function(){
-		var expModal = $("#expireModal");
-		if(expModal.length === 0) return;
+        cb.addEventListener('change', (e) => {
+          const el = e.target;
 
-		expModal.modal({show: false});
+          Spectre.setPreference(el.dataset.gbKey, el.checked ? 'true' : 'false');
+        });
+      });
+    }
 
-		var expInput = pasteForm.find("input[name='expire']");
-		var expDataLabel = $("#expirationButton .button-data-label");
+    const deleteModal = document.querySelector('#deleteModal')
 
-		var setExpirationSelected = function() {
-			$(this).button('toggle');
-			expInput.val($(this).data("value"));
-			expDataLabel.text($(this).data("display-value"));
-		};
+    if (deleteModal) {
+      const deleteModalButton = document.querySelector('#deleteModalButton')
+      const modalInstance = new BSN.Modal(deleteModal, { keyboard: true, backdrop: false });
 
-		setExpirationSelected.call(expModal.find("button[data-value='"+expInput.val()+"']"));
-		expModal.find("button[data-value]").on("click", function() {
-			setExpirationSelected.call(this);
-			expModal.modal("hide");
-		});
+      deleteModalButton.addEventListener('click', (e) => {
+        e.preventDefault();
 
-		$("#expirationButton").on("click", function() {
-			expModal.modal("show");
-		});
-	})();
+        modalInstance.show();
+      });
+    }
 
-	// Common for the following functions.
-	var lineNumberTrough = $("#line-numbers");
+    pasteForm.addEventListener('submit', (e) => {
+      if (!(codeEditor.value.match(/[^\s]/) || []).length) {
+        e.preventDefault();
+        const emptyModal = document.querySelector('#emptyPasteModal');
+        const modalInstance = new BSN.Modal(emptyModal, { keyboard: true, backdrop: false });
 
-	(function(){
-		if(lineNumberTrough.length === 0) return;
+        modalInstance.show();
 
-		if(code.length > 0) {
-			var linebar = $(document.createElement('div'))
-					.addClass("line-highlight-bar")
-					.hide()
-					.appendTo('body');
-			var permabar = linebar
-					.clone()
-					.addClass("line-highlight-bar-permanent")
-					.appendTo("body");
+        return;
+      }
 
-			var positionLinebar = function(linebar) {
-				linebar
-					.css("left", lineNumberTrough.outerWidth())
-					.css("top", $(this).position().top + $(this).parent().position().top)
-					.width(code.outerWidth())
-					.show();
-			};
+      if (context === 'new') {
+        if (Spectre.getPreference('saveExpiration', 'false') === 'true') {
+          Spectre.setDefaultExpiration(pasteForm.querySelector('input[name="expire"]').value);
+        } else {
+          Spectre.clearDefaultExpiration();
+        }
 
-			var setSelectedLineNumber = function(line) {
-				if(typeof line !== 'undefined') {
-					permabar.data("cur-line", line);
-					history.replaceState({"line":line}, "", "#L"+line);
-				} else {
-					permabar.removeData("cur-line");
-					history.replaceState(null, "", "#");
-				}
-			};
+        if (Spectre.getPreference('saveLanguage', 'false') === 'true') {
+          Spectre.setDefaultLanguage(langbox.value);
+        } else {
+          Spectre.clearDefaultLanguage();
+        }
+      }
 
-			var lineFromHash = function(hash) {
-				if(!hash) return undefined;
-				var v = hash.match(/^#L(\d+)/);
-				if(typeof v !== 'undefined' && v.length > 0) {
-					return v[1];
-				}
-				return undefined;
-			};
+      pasteForm.querySelector('input[name="title"]').value = document.querySelector('#editable-paste-title').innerText;
+    });
 
-			lineNumberTrough.fillWithLineNumbers((code.text().match(/\n/g)||[]).length+1, function() {
-				lineNumberTrough.children().mouseenter(function() {
-					positionLinebar.call(this, linebar);
-				}).mouseleave(function() {
-					linebar.hide();
-				}).click(function() {
-					var line = $(this).text();
-					if((0+permabar.data("cur-line")) === line) {
-						setSelectedLineNumber(undefined);
-						permabar.hide();
-						return;
-					}
-					setSelectedLineNumber(line);
-					positionLinebar.call(this, permabar);
-				});
+    document.querySelector('#editable-paste-title')
+      .addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          codeEditor.focus();
+        }
+      });
+  }
 
-				$(window).on("load popstate", function() {
-					var n = lineFromHash(window.location.hash);
+  const controls = document.querySelector('#paste-controls');
 
-					if(n) {
-						var linespan = $("span:nth-child("+n+")", lineNumberTrough);
+  if (controls) {
+    // TIL that appendChild can move nodes, that's pretty cool
+    onMediaQueryChanged('screen and (max-width: 767px)', (mql) => {
+      if (mql.matches) {
+        const phone = document.querySelector('#phone-paste-control-container');
 
-						if(linespan.length > 0) {
-							setSelectedLineNumber(n);
-							positionLinebar.call(linespan.get(0), permabar);
+        phone.prepend(controls);
+      } else {
+        const pc = document.querySelector('#desktop-paste-control-container');
 
-							setTimeout(() => {
-								linespan.scrollMinimal(); //
-							}, 250);
-						}
-					}
-				});
-			});
-			$(window).on("resize", function() {
-				$(linebar).width(code.outerWidth());
-				$(permabar).width(code.outerWidth());
-			});
-			$(document).on("media-query-changed", function() {
-				positionLinebar.call($("span:nth-child("+permabar.data("cur-line")+")", lineNumberTrough).get(0), permabar);
-			});
-		} else if(codeeditor.length > 0) {
-			codeeditor.on("input propertychange", function() {
-				lineNumberTrough.fillWithLineNumbers((codeeditor.val().match(/\n/g)||[]).length+1, function() {
-					$(".textarea-height-wrapper").css("left", lineNumberTrough.outerWidth());
-				});
-			}).triggerHandler("input");
-			$(document).on("media-query-changed", function() {
-				codeeditor.triggerHandler("input");
-			});
-		}
-	})();
-	(function(){
-		if(codeeditor.length > 0) {
-			codeeditor.keydown(function(e) {
-				if(e.keyCode === 9 && !e.ctrlKey && !e.altKey && !e.shiftKey) {
-					var ends = [this.selectionStart, this.selectionEnd];
-					this.value = this.value.substring(0, ends[0]) + "\t" + this.value.substring(ends[1], this.value.length);
-					this.selectionStart = this.selectionEnd = ends[0] + 1;
-					return false;
-				}
-				if(e.keyCode === 83 && e.ctrlKey && !e.altKey && !e.shiftKey) {
-					pasteForm.submit();
-					return false;
-				}
-			});
+        pc.prepend(controls);
+      }
+    });
+  }
 
-			var changed = false;
-			codeeditor.on("input propertychange", function() {
-				changed = true;
-			});
+  (function () {
+    const encryptModal = document.querySelector('#encryptModal');
+    const encryptionButton = document.querySelector('#encryptionButton');
 
-			pasteForm.on("submit", function() {
-				changed = false;
-			});
+    if (!encryptModal || !encryptionButton) {
+      return;
+    }
 
-			var deleteForm = $("[name='deleteForm']");
+    const encryptModalInstance = new BSN.Modal(encryptModal, { keyboard: true, backdrop: false });
+    const modalPasswordField = encryptModal.querySelector('input[type="password"]');
+    const pastePasswordField = pasteForm.querySelector('input[name="password"]');
 
-			deleteForm.on("submit", function() {
-				changed = false;
-			});
+    encryptModalInstance.hide();
 
-			window.addEventListener("beforeunload", function(e) {
-				if(!changed) {
-					return;
-				}
-				var confirmationMessage = "If you leave now, your paste will not be saved.";
-				(e || window.event).returnValue = confirmationMessage;
-				return confirmationMessage;
-			});
-		}
-	})();
+    encryptModal.addEventListener('show.bs.modal', () => {
+      modalPasswordField.value = pastePasswordField.value;
+    });
 
-	$('[autofocus]:not(:focus)').eq(0).focus();
-	$('[title]:not([data-disable-tooltip])').tooltip({
-		trigger: "hover",
-		placement: "bottom",
-		container: "body",
-		delay: {
-			show: 250,
-			hide: 50,
-		},
-	});
-	var pageLoadTime = Math.floor(new Date().getTime() / 1000);
-	$('#expirationIcon').tooltip({
-		trigger: "hover",
-		placement: "bottom",
-		container: "body",
-		title: function() {
-			var refTime = (0+$(this).data("reftime"));
-			var curTime = Math.floor(new Date().getTime() / 1000);
-			var adjust = pageLoadTime - refTime; // For the purpose of illustration, assume computer clock is faster.
-			var remaining = ((0+$(this).data("value")) + adjust - curTime);
-			if(remaining > 0) {
-				return "Expires in " + window.Spectre.formatDuration(remaining);
-			} else {
-				var r = Math.random();
-				return (r <= 0.5) ? "Wha-! It's going to explode! Get out while you still can!" : "He's dead, Jim.";
-			}
-		},
-		delay: {
-			show: 250,
-			hide: 50,
-		},
-	});
-});
+    encryptModal.addEventListener('shown.bs.modal', () => {
+      modalPasswordField.focus();
+      modalPasswordField.select();
+    });
 
-$(function(){
-	if(docCookies.hasItem("flash")) {
-		var flash = JSON.parse(atob(docCookies.getItem("flash")));
-		docCookies.removeItem("flash", "/");
-		Spectre.displayFlash(flash);
-	}
+    const setEncrypted = (encrypted) => {
+      const encryptionIcon = document.querySelector('#encryptionIcon');
+
+      encryptionIcon.classList.remove('icon-lock', 'icon-lock-open-alt');
+      encryptionIcon.classList.add(encrypted ? 'icon-lock' : 'icon-lock-open-alt');
+
+      document.querySelector('#encryptionButton .button-data-label').innerText = encrypted ? 'On' : '';
+    };
+
+    encryptModal.addEventListener('hidden.bs.modal', () => {
+      pastePasswordField.value = modalPasswordField.value;
+      setEncrypted(modalPasswordField.value.length > 0);
+    });
+
+    modalPasswordField.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        encryptModalInstance.hide();
+      }
+    });
+
+    encryptionButton.addEventListener('click', () => {
+      encryptModalInstance.show();
+    });
+  })();
+  (function () {
+    const expireModal = document.querySelector('#expireModal');
+    const expirationButton = document.querySelector('#expirationButton');
+
+    if (!expireModal || !expirationButton) {
+      return;
+    }
+
+    const expireModalInstance = new BSN.Modal(expireModal, { keyboard: true, backdrop: false });
+
+    expireModalInstance.hide();
+
+    const expireInput = pasteForm.querySelector('input[name="expire"]');
+    const expireDataLabel = document.querySelector('#expirationButton .button-data-label');
+    const setExpirationSelected = (btn) => {
+      btn.classList.add('active');
+      btn.firstChild.checked = true;
+      expireInput.value = btn.dataset.value;
+      expireDataLabel.innerHTML = btn.dataset.displayValue;
+    };
+
+    const expireButtonGroup = document.querySelector('#expireButtonGroup');
+
+    new BSN.Button(expireButtonGroup);
+
+    expireButtonGroup.addEventListener('change.bs.button', (event) => {
+      setExpirationSelected(expireModal.querySelector(`label[data-value].active`));
+      expireModalInstance.hide();
+    });
+
+    setExpirationSelected(expireModal.querySelector(`label[data-value="${expireInput.value}"]`));
+
+    expirationButton.addEventListener('click', () => {
+      expireModalInstance.show();
+    });
+  })();
+
+  // Common for the following functions.
+  const lineNumbers = document.querySelector('#line-numbers');
+
+  // has to be in a function so we can return
+  (function () {
+    if (!lineNumbers) {
+      return;
+    }
+
+    if (code) {
+      const linebar = document.createElement('div');
+
+      linebar.style.display = 'none';
+      linebar.classList.add('line-highlight-bar', 'test');
+
+      const permabar = linebar.cloneNode();
+
+      permabar.classList.add('line-highlight-bar-permanent');
+
+      document.body.append(linebar, permabar);
+
+      function positionLineBar(bar, span) {
+        bar.style.left = `${lineNumbers.offsetWidth}px`;
+        bar.style.top = `${span.offsetTop + span.parentElement.offsetTop}px`;
+        bar.style.width = `${code.offsetWidth}px`;
+        bar.style.display = 'block';
+      }
+
+      function setSelectedLineNumber(line) {
+        if (!line) {
+          history.replaceState(null, '', '#');
+          delete permabar.dataset.curLine;
+
+          return;
+        }
+
+        permabar.dataset.curLine = line;
+        history.replaceState({'line': line}, '', `#L${line}`);
+      }
+
+      function lineFromHash(hash) {
+        if (!hash) {
+          return null;
+        }
+
+        const v = hash.match(/^#L(\d+)/);
+
+        if (!v) {
+          return null;
+        }
+
+        return v[1];
+      }
+
+      const lineCount = (code.innerText.match(/\n/g) || []).length + 1;
+
+      fillWithLineNumbers(lineNumbers, lineCount).then(() => {
+        // TODO: less event listeners please
+        for (const span of lineNumbers.children) {
+          span.addEventListener('mouseenter', (e) => {
+            positionLineBar(linebar, e.target);
+          });
+
+          span.addEventListener('mouseleave', () => {
+            linebar.style.display = 'none';
+          });
+
+          span.addEventListener('click', (e) => {
+            const span = e.target;
+            const line = span.innerText;
+
+            if (permabar.dataset.curLine === line) {
+              setSelectedLineNumber(undefined);
+              permabar.style.display = 'none';
+
+              return;
+            }
+
+            setSelectedLineNumber(line);
+            positionLineBar(permabar, span);
+          });
+        }
+
+        ['load', 'popstate'].forEach((eName) => {
+          window.addEventListener(eName, () => {
+            const lineNr = lineFromHash(window.location.hash);
+
+            if (!lineNr) {
+              return;
+            }
+
+            const span = lineNumbers.querySelector(`span:nth-child(${lineNr})`);
+
+            if (!span) {
+              return;
+            }
+
+            setSelectedLineNumber(lineNr);
+            positionLineBar(permabar, span);
+
+            setTimeout(() => {
+              scrollMinimal(span);
+            }, 250);
+          });
+        });
+      });
+
+      window.addEventListener('resize', () => {
+        linebar.style.width = `${code.offsetWidth}px`;
+        permabar.style.width = `${code.offsetWidth}px`;
+      });
+
+      // Emitted from spectre.jQuery.js
+      document.addEventListener('media-query-changed', (e) => {
+        if (!permabar.dataset.curLine) {
+          return;
+        }
+
+        const span = lineNumbers.querySelector(`span:nth-child(${permabar.dataset.curLine})`);
+
+        if (!span) {
+          return;
+        }
+
+        positionLineBar(permabar, span);
+      });
+    } else if (codeEditor) {
+      ['input', 'propertychange'].forEach((eName) => {
+        codeEditor.addEventListener(eName, () => {
+          const lines = (codeEditor.value.match(/\n/g) || []).length + 1;
+          fillWithLineNumbers(lineNumbers, lines).then(() => {
+            document.querySelector('.textarea-height-wrapper')
+              .style.left = `${lineNumbers.offsetWidth}px`;
+          })
+            .catch(() => { /* Just ignore */
+            });
+        });
+      });
+
+      const inputEvent = new CustomEvent('input');
+
+      codeEditor.dispatchEvent(inputEvent);
+
+      // Emitted from spectre.jQuery.js
+      document.addEventListener('media-query-changed', () => {
+        codeEditor.dispatchEvent(inputEvent);
+      });
+    }
+  })();
+  (function () {
+    if (!codeEditor) {
+      return;
+    }
+
+    codeEditor.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === 's') {
+        e.cancelBubble = true;
+        e.preventDefault();
+
+        // submit form
+        pasteForm.requestSubmit();
+        return;
+      }
+
+      if (e.key.toLowerCase() === 'tab' && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+        e.cancelBubble = true;
+        e.preventDefault();
+        // TODO: idk
+        /*const el = e.target;
+
+        const ends = [el.selectionStart, el.selectionEnd];
+        this.value = el.value.substring(0, ends[0]) + "\t" + el.value.substring(ends[1], el.value.length);
+        this.selectionStart = el.selectionEnd = ends[0] + 1;*/
+      }
+    });
+
+    let changed = false;
+
+    listenForEvents(['input', 'propertychange'], codeEditor, () => {
+      // If we have a value we mark it as changed
+      changed = Boolean(codeEditor.value);
+    });
+
+    pasteForm.addEventListener('submit', () => {
+      changed = false;
+    });
+
+    const delForm = document.querySelector('[name="deleteForm"]');
+
+    if (delForm) {
+      delForm.addEventListener('submit', () => {
+        changed = false;
+      });
+    }
+
+    window.onbeforeunload = () => changed ? 'If you leave now, your paste will not be saved.' : undefined;
+  })();
+
+  const autofocus = document.querySelector('[autofocus]:not(:focus)');
+
+  if (autofocus) {
+    autofocus.focus();
+  }
+
+  // http://thednp.github.io/bootstrap.native/
+  const elementsToTooltip = document.querySelectorAll('[title]:not([data-disable-tooltip])');
+
+  Array.from(elementsToTooltip).map(
+    tip => new BSN.Tooltip(tip, {
+      placement: 'bottom',
+      animation: 'fade',
+      container: 'body',
+      delay: 50,
+    })
+  );
+  var pageLoadTime = Math.floor(new Date().getTime() / 1000);
+  const expireIcon = document.querySelector('#expirationIcon');
+
+  if (expireIcon) {
+    new BSN.Tooltip(expireIcon, {
+      placement: 'bottom',
+      animation: 'fade',
+      container: 'body',
+      delay: 50,
+    });
+
+    expireIcon.addEventListener('show.bs.tooltip', (event) => {
+      const el = event.target;
+      const refTime = Number(el.dataset.reftime);
+      const curTime = Math.floor(new Date().getTime() / 1000);
+      const adjust = pageLoadTime - refTime; // For the purpose of illustration, assume computer clock is faster.
+      const remaining = (Number(el.dataset.value) + adjust - curTime);
+
+      if (remaining > 0) {
+        el.dataset.title = "Expires in " + Spectre.formatDuration(remaining);
+      } else {
+        const r = Math.random();
+
+        el.dataset.title = (r <= 0.5) ? "Wha-! It's going to explode! Get out while you still can!" : "He's dead, Jim.";
+      }
+    }, false);
+  }
 });
