@@ -812,7 +812,7 @@ func init() {
 
 	createStaticPastes()
 
-	fmt.Println("Ghostbin ready")
+	fmt.Println("Ghostbin ready with", runtime.NumCPU(), "CPU's")
 }
 /// </editor-fold>
 
