@@ -1,0 +1,8 @@
+node_modules
+.dockerignore
+.git/
+.gitattributes
+.gitignore
+.tmp
+out
+accounts

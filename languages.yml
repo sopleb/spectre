@@ -3,8 +3,8 @@ formatters:
     name: default
     func: commandFormatter
     args:
-    - /usr/local/bin/pygmentize
-#    - pygmentize
+#    - /usr/local/bin/pygmentize
+    - pygmentize
     - "-f"
     - html
     - "-l"
