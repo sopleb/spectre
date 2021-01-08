@@ -32,7 +32,7 @@ jobs:
                 build-args: |
                     BRANCH=${{ github.ref }}
                     COMMIT=${{ github.sha }}
-                cache-from: type=registry,ref=menudocs/spectre:latest
+                cache-from: type=registry,ref=menudocs/spectre/spectre:latest
                 cache-to: type=inline
                 tags: menudocs/spectre:latest
 
