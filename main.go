@@ -812,7 +812,7 @@ func init() {
 
 	createStaticPastes()
 
-	fmt.Println("Ghostbin ready with", runtime.NumCPU(), "CPU's")
+	fmt.Println("Ghostbin ready")
 }
 /// </editor-fold>
 
@@ -841,6 +841,9 @@ func main() {
 		runtime.ReadMemStats(&ms)
 		return ms.Alloc
 	})
+    healthServer.RegisterComputedMetric("cpus", func() interface{} {
+        return runtime.NumCPU()
+    })
 	healthServer.RegisterComputedMetric("paste.expiring", func() interface{} {
 		return pasteExpirator.Len()
 	})

@@ -20,7 +20,7 @@ COPY --from=node_builder /spectre/build/ ./build/
 
 FROM alpine:latest
 WORKDIR /spectre
-RUN apk add --no-cache python3 py3-pip py3-pygments
+RUN apk add --no-cache python3 py3-pygments
 
 COPY --from=builder /spectre/build/ ./
 RUN ls ./
