@@ -1,23 +1,23 @@
 package main
 
 import (
-    "bytes"
-    "crypto/hmac"
-    "crypto/rand"
-    "crypto/sha256"
-    "encoding/base32"
-    "fmt"
-    "io"
-    "net/http"
-    "net/url"
-    "os"
-    "os/signal"
-    "strings"
-    "syscall"
+	"bytes"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base32"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
 
-    "github.com/golang/glog"
-    "github.com/gorilla/mux"
-    "gopkg.in/yaml.v2"
+	"github.com/golang/glog"
+	"github.com/gorilla/mux"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -74,10 +74,10 @@ func generateRandomBase32String(nbytes, outlen int) (string, error) {
 }
 
 func YAMLUnmarshalFile(filename string, i interface{}) error {
-    path, err := os.Getwd()
-    if err != nil {
-        panic(err)
-    }
+	path, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
 
 	yamlFile, err := os.Open(path + "/" + filename)
 	if err != nil {

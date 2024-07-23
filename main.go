@@ -71,7 +71,7 @@ func (e PasteTooLargeError) StatusCode() int {
 	return http.StatusBadRequest
 }
 
-/// <editor-fold name="route handlers">
+// / <editor-fold name="route handlers">
 func getPasteJSONHandler(o Model, w http.ResponseWriter, r *http.Request) {
 	p := o.(*Paste)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -622,6 +622,7 @@ func pasteDestroyCallback(p *Paste) {
 
 	healthServer.IncrementMetric("paste.deleted")
 }
+
 /// </editor-fold>
 
 var pasteStore *FilesystemPasteStore
@@ -660,7 +661,7 @@ func (a *args) parse() {
 }
 
 func createStaticPastes() {
-    staticPastes["api"] = &Paste{
+	staticPastes["api"] = &Paste{
 		ID: "api_docs.paste",
 		Language: &Language{
 			Name:                "Markdown",
@@ -690,7 +691,7 @@ func getStaticPaste(r *http.Request) (Model, error) {
 
 var arguments = &args{}
 
-/// <editor-fold name="init func">
+// / <editor-fold name="init func">
 func init() {
 	// N.B. this should not be necessary.
 	gob.Register(map[PasteID][]byte(nil))
@@ -815,6 +816,7 @@ func init() {
 
 	fmt.Println("Ghostbin ready")
 }
+
 /// </editor-fold>
 
 func main() {
@@ -842,9 +844,9 @@ func main() {
 		runtime.ReadMemStats(&ms)
 		return ms.Alloc
 	})
-    healthServer.RegisterComputedMetric("cpus", func() interface{} {
-        return runtime.NumCPU()
-    })
+	healthServer.RegisterComputedMetric("cpus", func() interface{} {
+		return runtime.NumCPU()
+	})
 	healthServer.RegisterComputedMetric("paste.expiring", func() interface{} {
 		return pasteExpirator.Len()
 	})
