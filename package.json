@@ -16,13 +16,16 @@
     "grunt": "^1.6.1",
     "grunt-cli": "^1.4.3",
     "grunt-contrib-clean": "^2.0.0",
-    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-concat": "^2.1.0",
     "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-cssmin": "^3.0.0",
-    "grunt-contrib-less": "^2.0.0",
+    "grunt-contrib-cssmin": "^5.0.0",
+    "grunt-contrib-less": "^3.0.0",
     "grunt-contrib-uglify-es": "git://github.com/gruntjs/grunt-contrib-uglify.git#harmony",
     "grunt-filerev": "^2.3.1",
     "grunt-usemin": "^3.1.1",
     "load-grunt-tasks": "^5.1.0"
+  },
+  "devDependencies": {
+    "grunt-dev-update": "^2.3.0"
   }
 }
