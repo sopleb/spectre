@@ -9,9 +9,9 @@ require (
 	github.com/gorilla/mux v1.6.2
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/sessions v1.1.3
-	github.com/microcosm-cc/bluemonday v1.0.2
+	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/russross/blackfriday v1.5.2
-	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
+	golang.org/x/crypto v0.14.0
 	gopkg.in/yaml.v2 v2.2.2
 )
 
