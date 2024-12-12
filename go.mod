@@ -10,7 +10,7 @@ require (
 	github.com/gorilla/sessions v1.3.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/russross/blackfriday v1.6.0
-	golang.org/x/crypto v0.25.0
+	golang.org/x/crypto v0.31.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
